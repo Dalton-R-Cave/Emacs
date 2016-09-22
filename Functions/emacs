@@ -1,0 +1,206 @@
+(setq inhibit-splash-screen t ;;hide splash screen
+      make-backup-files nil ;;don't create ~backupfiles
+      initial-scratch-message ""  ;;empty init scratch page
+)
+
+
+(defun reload-and-scroll-down()
+  "reload file and scroll to botom of screen"
+  (interactive)
+  (revert-buffer t t)
+  (goto-char (point-max))
+  (end-of-buffer)
+)
+  
+
+
+(defun my-find-file-check-make-large-file-read-only-hook()
+ "If a file is over a given size, make the buffer read only."
+  (when (> (buffer-size) (* 5 1024 1024))
+    (setq buffer-read-only t)
+    (buffer-disable-undo)
+    (fundamental-mode)))
+
+(add-hook 'find-file-hooks 'my-find-file-check-make-large-file-read-only-hook)
+(add-to-list 'load-path "~/.emacs.d/modes/")
+(load "csv-mode.el")
+
+(add-to-list 'exec-path "C:/Program Files (x86)/Aspell/bin/")
+(setq ispell-program-name "aspell")
+(setq ispell-personal-dictionary "~/.emacs.d/wordList/american.alias")
+(require 'ispell)
+
+
+(defun remove-dos-eol ()
+  "Do not show ^M in files containing mixed UNIX and DOS line endings."
+  (interactive)
+  (setq buffer-display-table (make-display-table))
+  (aset buffer-display-table ?\^M [])
+  (set-default 'truncate-lines t))
+
+(defun toggle-truncate-lines ()
+"toggles truncate-lines"
+(interactive)
+(if truncate-lines
+    (set-default 'truncate-lines nil)
+  (set-default 'truncate-lines t)
+  )
+(redraw-frame (selected-frame))
+)
+
+(defun transparent(alpha-level no-focus-alpha-level)
+  "Let's you make the window transparent"
+  (interactive "nAlpha level (0-100): \nnNo focus alpha level (0-100): ")
+  (set-frame-parameter (selected-frame) 'alpha (list alpha-level no-focus-alpha-level))
+  (add-to-list 'default-frame-alist `(alpha ,alpha-level)))
+
+
+(defun transparency-set-initial-value ()
+  "Set initial value of alpha parameter for the current frame"
+  (interactive)
+  (if (equal (frame-parameter nil 'alpha) nil)
+      (set-frame-parameter nil 'alpha 100)))
+
+(defun transparency-set-value (numb)
+  "Set level of transparency for the current frame"
+  (interactive "nEnter transparency level in range 0-100: ")
+  (if (> numb 100)
+      (message "Error! The maximum value for transparency is 100!")
+    (if (< numb 0)
+	(message "Error! The minimum value for transparency is 0!")
+      (set-frame-parameter nil 'alpha numb))))
+
+(defun transparency-increase ()
+  "Increase level of transparency for the current frame"
+  (interactive)
+  (transparency-set-initial-value)
+   (if (> (frame-parameter nil 'alpha) 0)
+       (set-frame-parameter nil 'alpha (+ (frame-parameter nil 'alpha) -2))
+     (message "This is a minimum value of transparency!")))
+
+(defun transparency-decrease ()
+  "Decrease level of transparency for the current frame"
+  (interactive)
+  (transparency-set-initial-value)
+  (if (< (frame-parameter nil 'alpha) 100)
+      (set-frame-parameter nil 'alpha (+ (frame-parameter nil 'alpha) +2))
+    (message "This is a minimum value of transparency!")))
+
+
+(defun my-horizontal-recenter ()
+  "make the point horizontally centered in the window"
+  (interactive)
+  (let ((mid (/ (window-width) 2))
+        (line-len (save-excursion (end-of-line) (current-column)))
+        (cur (current-column)))
+    (if (< mid cur)
+        (set-window-hscroll (selected-window)
+                            (- cur mid)))))
+
+(global-set-key (kbd "C-S-l") 'my-horizontal-recenter)
+
+
+(fset 'copy-record
+   [?\C-r ?< ?r ?e ?c ?o ?r ?d ?> ?\C-a ?\C-  ?\C-s ?< ?/ ?r ?e ?c ?o ?r ?d ?> ?\M-w])
+
+(fset 'xml-pretty
+   [?\M-x ?r ?e ?p ?l ?a ?c ?e ?- ?s ?t ?r ?i ?n ?g return ?> ?< return ?> ?\C-q ?\C-j ?< return ?\M-x ?s ?g ?m ?l ?- ?m ?o ?d ?e return ?\C-x ?h ?\C-\M-\\])
+
+(global-set-key (kbd "<f5>") 'reload-and-scroll-down )
+
+
+(defun toggleReloadTimer()
+  "toggle reload timer"
+  (interactive)
+  (cond 
+   ((or (not(boundp 'toggleReloadTimerTIMER)) (null toggleReloadTimerTIMER)) (progn (setq toggleReloadTimerTIMER (run-at-time "5 sec" 5 'reload-and-scroll-down)) (message "timer set") ))
+   (t (progn (cancel-timer toggleReloadTimerTIMER) (setq toggleReloadTimerTIMER nil) (message "timer stopped") ))
+))
+
+
+
+(global-set-key (kbd "C-<f5>") 'toggleReloadTimer )
+
+(global-set-key (kbd "<f8>") 'toggle-truncate-lines)
+(global-set-key (kbd "<f9>") 'xml-pretty )
+(global-set-key (kbd "<f12>") 'speedbar )
+
+
+
+
+(add-to-list 'custom-theme-load-path "~/.emacs.d/themes/")
+(load-theme 'tron t)
+(menu-bar-mode -1)
+(tool-bar-mode -1)
+(scroll-bar-mode -1)
+
+(set-frame-size (selected-frame) 160 48 )
+(set-frame-position (selected-frame) 50 50)
+(put 'narrow-to-region 'disabled nil)
+
+
+;(transparency-set-value 85)
+(global-set-key (kbd "C-<") 'transparency-increase )
+(global-set-key (kbd "C->") 'transparency-decrease )
+(transparency-set-value 85)
+
+
+(fset 'setupBuffers
+   [?\C-x ?3 ?\C-x ?2 ?\C-x ?o ?\C-x ?b ?s ?c ?r ?a ?t ?c ?h ?2 return ?\C-x ?o ?\C-x ?b ?s ?c ?r ?a ?t ?c ?h ?3 return ?\C-x ?o ?\C-u ?2 ?0 ?\C-x ?\}])
+
+
+;;java hook?
+;;(c-set-style '"bsd")
+;(load-file "~/.emacs.d/jtags/jtags.el")
+;(load-file "~/.emacs.d/jtags/jtags-extras.el")
+;(load-file "~/.emacs.d/log4j/log4j-mode.el")
+
+;(defun load-PromelaSpinMode ()
+;  "Loads NuSMV and disables menu-bar-mode"
+;  (interactive)
+;  (load-file "~/.emacs.d/lisp/promela-mode.el")
+;  (menu-bar-mode -1)
+;  (promela-mode)
+;  (promela-toggle-auto-match-delimiter)
+;)
+;
+;
+;(add-to-list 'auto-mode-alist '("\\.smv$" . load-NuSMV))
+;(add-to-list 'auto-mode-alist '("\\.pml$" . load-PromelaSpinMode))
+;
+;(put 'narrow-to-region 'disabled nil)
+;
+;(load-file "~/.emacs.d/lisp/control-lock.el")
+;(global-set-key (kbd "C-S-l") 'control-lock-enable)
+;
+
+(setq c-default-style
+      '((java-mode . "java")
+        (awk-mode . "awk")
+        (other . "k&r")))
+
+(defun indent-whole-buffer ()
+  "Selects the whole buffer and calls indent-region"
+  (interactive)
+  (save-excursion
+    (indent-region (point-min) (point-max))
+    )
+  )
+
+(global-set-key (kbd "C-S-f") 'indent-whole-buffer)
+
+
+(custom-set-variables
+ ;; custom-set-variables was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ '(custom-safe-themes
+   (quote
+    ("4b4d5d408168bf6fc634e87da93dae9c66dc462376550dd47f102733831b2b3d" default))))
+(custom-set-faces
+ ;; custom-set-faces was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ )
